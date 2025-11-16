@@ -5,18 +5,21 @@
 
 #define TAM_GEN_MAXIMO 10
 
-typedef struct ListaEnteros {
+typedef struct ListaEnteros 
+{
     int* posiciones;
     int cantidad;
     int capacidad;
 } ListaEnteros;
 
-typedef struct NodoTrie {
+typedef struct NodoTrie 
+{
     struct NodoTrie* hijos[4];
     ListaEnteros* ocurrencias;
     int esHoja;
 } NodoTrie;
-
+// Función que convierte un carácter base (A,C,G,T) en un índice numérico (0-3).
+// Retorna -1 si el carácter no es una base válida.
 int base_a_indice(char base)
 {
     int indice;
@@ -30,7 +33,8 @@ int base_a_indice(char base)
     }
     return -1;
 }
-
+// Función inversa que convierte un índice numérico (0-3) en un carácter base.
+// Retorna '?' si el índice no es válido.
 char indice_a_base(int indice)
 {
     char bases[] = { 'A', 'C', 'G', 'T' };
@@ -38,7 +42,9 @@ char indice_a_base(int indice)
         return bases[indice];
     return '?';
 }
-
+// Crea un nodo del árbol trie para genes al nivel dado.
+// Nivel máximo determina la altura total del árbol.
+// Inicializa listas de posiciones solo en nodos hoja.
 NodoTrie* crear_nodo(int nivel, int nivel_max)
 {
     int i;
@@ -61,7 +67,8 @@ NodoTrie* crear_nodo(int nivel, int nivel_max)
     }
     return nodo;
 }
-
+// Agrega la posición de un gen a la lista dinámica del nodo hoja.
+// Maneja realocación dinámica para ampliar la lista.
 void agregar_posicion(ListaEnteros* lista, int posicion)
 {
     int* nuevas_posiciones;
@@ -75,14 +82,14 @@ void agregar_posicion(ListaEnteros* lista, int posicion)
     lista->posiciones[lista->cantidad] = posicion;
     lista->cantidad++;
 }
-
+// Libera la memoria utilizada por una lista dinámica de posiciones.
 void liberar_lista(ListaEnteros* lista)
 {
     if (!lista) return;
     free(lista->posiciones);
     free(lista);
 }
-
+// Libera recursivamente la memoria de todo el árbol trie incluyendo listas.
 void liberar_trie(NodoTrie* nodo, int nivel, int nivel_max)
 {
     int i;
@@ -97,13 +104,13 @@ void liberar_trie(NodoTrie* nodo, int nivel, int nivel_max)
     }
     free(nodo);
 }
-
+// Inicializa la raíz del trie para genes de tamaño tam_gen.
 NodoTrie* inicializar_trie(int tam_gen)
 {
     NodoTrie* raiz = crear_nodo(0, tam_gen);
     return raiz;
 }
-
+// Inserta una ocurrencia de un gen en el trie con su posición dentro de la secuencia.
 void insertar_gen(NodoTrie* raiz, const char* gen, int tam_gen, int posicion)
 {
     int i, indice;
@@ -116,7 +123,7 @@ void insertar_gen(NodoTrie* raiz, const char* gen, int tam_gen, int posicion)
     }
     agregar_posicion(actual->ocurrencias, posicion);
 }
-
+// Procesa toda la secuencia y registra todas las posiciones de genes posibles en el trie.
 void procesar_secuencia(NodoTrie* raiz, const char* secuencia, int largo_secuencia, int tam_gen)
 {
     int i;
@@ -128,7 +135,8 @@ void procesar_secuencia(NodoTrie* raiz, const char* secuencia, int largo_secuenc
         insertar_gen(raiz, gen, tam_gen, i);
     }
 }
-
+// Busca un gen específico en el trie y retorna la lista de posiciones donde aparece.
+// Retorna NULL si el gen no es válido o no existe.
 ListaEnteros* buscar_gen(NodoTrie* raiz, const char* gen, int tam_gen)
 {
     int i, indice;
@@ -142,7 +150,7 @@ ListaEnteros* buscar_gen(NodoTrie* raiz, const char* gen, int tam_gen)
     }
     return actual->ocurrencias;
 }
-
+// Valida que un gen tenga el largo correcto y solo contenga bases válidas (A,C,G,T).
 int es_gen_valido(const char* gen, int tam_gen)
 {
     int i;
@@ -154,7 +162,7 @@ int es_gen_valido(const char* gen, int tam_gen)
     }
     return 1;
 }
-
+// Muestra la ayuda con los comandos disponibles para el usuario.
 void mostrar_help()
 {
     printf("\nComandos disponibles:\n");
@@ -167,7 +175,8 @@ void mostrar_help()
     printf("help         - Mostrar esta ayuda\n");
     printf("salir        - Salir del programa\n\n");
 }
-
+// Función recursiva para recorrer el trie y encontrar genes con máximo y mínimo número de repeticiones.
+// Guarda los genes y cantidades máximas y mínimas encontradas.
 void recorrer_trie(NodoTrie* nodo, int nivel, int nivel_max, char* buffer, char* max_gen, char* min_gen, int* max_count, int* min_count)
 {
     int i;
@@ -200,7 +209,7 @@ void recorrer_trie(NodoTrie* nodo, int nivel, int nivel_max, char* buffer, char*
         recorrer_trie(nodo->hijos[i], nivel + 1, nivel_max, buffer, max_gen, min_gen, max_count, min_count);
     }
 }
-
+// Función recursiva para imprimir todos los genes almacenados en el trie junto a la cantidad de repeticiones.
 void imprimir_todos_gener(NodoTrie* nodo, int nivel, int nivel_max, char* buffer)
 {
     int i;
@@ -226,24 +235,24 @@ void imprimir_todos_gener(NodoTrie* nodo, int nivel, int nivel_max, char* buffer
 
 int main()
 {
-    NodoTrie* trie = NULL;
-    int tam_gen = 0;
-    char comando[32];
-    char nombre_archivo[128];
-    char gen[TAM_GEN_MAXIMO + 1];
-    char secuencia[4096];
-    FILE* archivo;
-    int largo_secuencia;
+    NodoTrie* trie = NULL; // Estructura trie para almacenar genes
+    int tam_gen = 0; // Tamaño de los genes (altura del trie)
+    char comando[32]; // Comando ingresado por el usuario
+    char nombre_archivo[128]; // Nombre o ruta del archivo con secuencia de ADN
+    char gen[TAM_GEN_MAXIMO + 1]; // Variable para almacenar gen ingresado por usuario
+    char secuencia[4096]; // Buffer para cargar la secuencia desde archivo
+    FILE* archivo; // Puntero a archivo para lectura
+    int largo_secuencia; // Longitud de la secuencia leída
     int i;
-    ListaEnteros* resultado;
-    char buffer[TAM_GEN_MAXIMO + 1];
-    char gen_max[TAM_GEN_MAXIMO + 1];
-    char gen_min[TAM_GEN_MAXIMO + 1];
-    int max_cantidad = -1;
-    int min_cantidad = -1;
+    ListaEnteros* resultado; // Puntero a lista de posiciones devuelto por buscar_gen
+    char buffer[TAM_GEN_MAXIMO + 1]; // Buffer para operaciones en funciones recursivas
+    char gen_max[TAM_GEN_MAXIMO + 1]; // Buffer para almacenar gen más repetido
+    char gen_min[TAM_GEN_MAXIMO + 1]; // Buffer para almacenar gen menos repetido
+    int max_cantidad = -1; // Cantidad máxima de repeticiones encontradas
+    int min_cantidad = -1; // Cantidad mínima de repeticiones encontradas
 
     mostrar_help();
-
+    // Bucle principal de interacción con el usuario
     while (1)
     {
         printf("bio> ");
@@ -333,4 +342,5 @@ int main()
     }
 
     return 0;
+
 }
