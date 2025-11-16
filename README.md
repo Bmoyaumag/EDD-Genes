@@ -1,2 +1,11 @@
 # EDD-Genes
-El problema a abordar consiste en buscar cuál es la frecuencia de repetición de un gen dentro de una secuencia genética e indicar las posiciones de dicho gen dentro de la secuencia.
+Para poder ocupar el codigo se debe usar el Makefile.
+Comandos disponibles:
+iniciar <n>  - Crear árbol para genes de tamaño
+leer <archivo> - Cargar y procesar secuencia desde archivo\
+buscar <GEN>  - Buscar posiciones de un gen
+max          - Mostrar gen mas repetido
+min          - Mostrar gen menos repetido
+all          - Mostrar todos los genes y sus repeticiones
+help         - Mostrar esta ayuda
+salir        - Salir del programa
