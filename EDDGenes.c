@@ -5,6 +5,14 @@
 
 #define TAM_GEN_MAXIMO 10
 
+
+//listas globales para guardar todos los genes max y min
+char max_genes[256][TAM_GEN_MAXIMO + 1];
+int max_count_genes = 0;
+
+char min_genes[256][TAM_GEN_MAXIMO + 1];
+int min_count_genes = 0;
+
 typedef struct ListaEnteros 
 {
     int* posiciones;
@@ -177,27 +185,45 @@ void mostrar_help()
 }
 // Función recursiva para recorrer el trie y encontrar genes con máximo y mínimo número de repeticiones.
 // Guarda los genes y cantidades máximas y mínimas encontradas.
-void recorrer_trie(NodoTrie* nodo, int nivel, int nivel_max, char* buffer, char* max_gen, char* min_gen, int* max_count, int* min_count)
+
+//agrega lsita
+void recorrer_trie(NodoTrie* nodo, int nivel, int nivel_max, char* buffer,
+                   int* max_count, int* min_count)
 {
     int i;
+
     if (!nodo) return;
 
     if (nivel == nivel_max)
     {
         int cantidad = nodo->ocurrencias->cantidad;
+
         if (cantidad > 0)
         {
+            buffer[nivel] = '\0';
+
+            // --- MAX ---
             if (cantidad > *max_count)
             {
                 *max_count = cantidad;
-                strncpy(max_gen, buffer, nivel_max);
-                max_gen[nivel_max] = '\0';
+                max_count_genes = 0;              // reset lista
+                strcpy(max_genes[max_count_genes++], buffer);
             }
-            if ((cantidad < *min_count) || (*min_count == -1))
+            else if (cantidad == *max_count)
+            {
+                strcpy(max_genes[max_count_genes++], buffer);
+            }
+
+            // --- MIN ---
+            if (*min_count == -1 || cantidad < *min_count)
             {
                 *min_count = cantidad;
-                strncpy(min_gen, buffer, nivel_max);
-                min_gen[nivel_max] = '\0';
+                min_count_genes = 0;
+                strcpy(min_genes[min_count_genes++], buffer);
+            }
+            else if (cantidad == *min_count)
+            {
+                strcpy(min_genes[min_count_genes++], buffer);
             }
         }
         return;
@@ -206,9 +232,10 @@ void recorrer_trie(NodoTrie* nodo, int nivel, int nivel_max, char* buffer, char*
     for (i = 0; i < 4; i++)
     {
         buffer[nivel] = indice_a_base(i);
-        recorrer_trie(nodo->hijos[i], nivel + 1, nivel_max, buffer, max_gen, min_gen, max_count, min_count);
+        recorrer_trie(nodo->hijos[i], nivel + 1, nivel_max, buffer, max_count, min_count);
     }
 }
+
 // Función recursiva para imprimir todos los genes almacenados en el trie junto a la cantidad de repeticiones.
 void imprimir_todos_gener(NodoTrie* nodo, int nivel, int nivel_max, char* buffer)
 {
@@ -221,7 +248,17 @@ void imprimir_todos_gener(NodoTrie* nodo, int nivel, int nivel_max, char* buffer
         if (cantidad > 0)
         {
             buffer[nivel] = '\0';
-            printf("%s : %d\n", buffer, cantidad);
+
+            // Imprimir el gen
+            printf("%s ", buffer);
+
+            // Imprimir todas sus posiciones
+            for (int j = 0; j < cantidad; j++)
+            {
+                printf("%d ", nodo->ocurrencias->posiciones[j]);
+            }
+
+            printf("\n");
         }
         return;
     }
@@ -232,6 +269,10 @@ void imprimir_todos_gener(NodoTrie* nodo, int nivel, int nivel_max, char* buffer
         imprimir_todos_gener(nodo->hijos[i], nivel + 1, nivel_max, buffer);
     }
 }
+
+
+
+
 
 int main()
 {
@@ -301,25 +342,62 @@ int main()
             }
             printf("\n");
         }
+        //cambio
         else if (strcmp(comando, "max") == 0)
         {
             max_cantidad = -1;
             min_cantidad = -1;
-            recorrer_trie(trie, 0, tam_gen, buffer, gen_max, gen_min, &max_cantidad, &min_cantidad);
-            if (max_cantidad > 0)
-                printf("Gen mas repetido: %s con %d ocurrencias\n", gen_max, max_cantidad);
-            else
+            max_count_genes = 0;
+
+            recorrer_trie(trie, 0, tam_gen, buffer, &max_cantidad, &min_cantidad);
+
+            if (max_cantidad <= 0)
+            {
                 printf("-1\n");
+                continue;
+            }
+
+            for (i = 0; i < max_count_genes; i++) 
+            {
+                printf("%s ", max_genes[i]);
+
+                ListaEnteros* pos = buscar_gen(trie, max_genes[i], tam_gen);
+                if (pos) 
+                {
+                    for (int j = 0; j < pos->cantidad; j++)
+                        printf("%d ", pos->posiciones[j]);
+                }
+
+                printf("\n");
+            }
         }
         else if (strcmp(comando, "min") == 0)
         {
             max_cantidad = -1;
             min_cantidad = -1;
-            recorrer_trie(trie, 0, tam_gen, buffer, gen_max, gen_min, &max_cantidad, &min_cantidad);
-            if (min_cantidad >= 0)
-                printf("Gen menos repetido: %s con %d ocurrencias\n", gen_min, min_cantidad);
-            else
+            min_count_genes = 0;
+
+            recorrer_trie(trie, 0, tam_gen, buffer, &max_cantidad, &min_cantidad);
+
+            if (min_cantidad < 0)
+            {
                 printf("-1\n");
+                continue;
+            }
+
+            for (i = 0; i < min_count_genes; i++)
+            {
+                printf("%s ", min_genes[i]);
+
+                ListaEnteros* pos = buscar_gen(trie, min_genes[i], tam_gen);
+                if (pos) 
+                {
+                    for (int j = 0; j < pos->cantidad; j++)
+                        printf("%d ", pos->posiciones[j]);
+                }
+
+                printf("\n");
+            }
         }
         else if (strcmp(comando, "all") == 0)
         {
